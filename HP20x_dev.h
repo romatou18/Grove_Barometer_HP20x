@@ -24,12 +24,12 @@ typedef unsigned long   ulong;
 #define HP20X_I2C_DEV_ID2      (0XEE)>>1    //CSB PIN is GND level(address is 0x77)
 #define HP20X_SOFT_RST         0x06
 #define HP20X_WR_CONVERT_CMD   0x40
-#define HP20X_CONVERT_OSR4096  0<<2
-#define HP20X_CONVERT_OSR2048  1<<2
-#define HP20X_CONVERT_OSR1024  2<<2
-#define HP20X_CONVERT_OSR512   3<<2
-#define HP20X_CONVERT_OSR256   4<<2
-#define HP20X_CONVERT_OSR128   5<<2
+#define HP20X_CONVERT_OSR4096  0<<2  //10hz
+#define HP20X_CONVERT_OSR2048  1<<2 //20hz
+#define HP20X_CONVERT_OSR1024  2<<2 //40hz
+#define HP20X_CONVERT_OSR512   3<<2 //80hz
+#define HP20X_CONVERT_OSR256   4<<2 //160hz
+#define HP20X_CONVERT_OSR128   5<<2 //320hz
 
 #define HP20X_READ_P           0x30   //read_p command
 #define HP20X_READ_A           0x31   //read_a command
