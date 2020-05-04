@@ -83,17 +83,20 @@ Need to declare the HP20x_dev locally in the calling program using
 I2C bus parameters i.e. HP20x_dev HP20x((unint8_t)1);
 then call the begin method with I2C bus pins specifications
 i.e. HP20x.begin(mySDAPin, mySDCpin);
-**/
-
-class HP20x_dev : public TwoWire
+-**/
+class HP20x_dev
 {
-/* Public variables and functions */
-public:
-  uchar OSR_CFG;
+  /* Public variables and functions */
+  public:
+	int i2c_bus = 0; // i2c bus controller number either 0 or 1 on ESP32
+	uint32_t i2c_freq; // frequency default 100000 HZ in normal mode and 400000 in fast mode on esp32
+	int i2c_sda; // sda pin GPIO number
+	int i2c_sdc; // sdc pin GPIO number
+
+	TwoWire* wire;
 	uint  OSR_ConvertTime;
     /* Constructor */
-	HP20x_dev(uint8_t busID); // on ESP32 typically bus controller #1 for ie. SDA  = pin 21, scl = pin 22.
-	void begin(int sda, int scl);
+    HP20x_dev(uint8_t bus_controller, int sda=-1, int sdc=-1, uint32_t freq = 0U);	
 	
 	/* Read sensor data */
 	ulong ReadTemperature(void);
