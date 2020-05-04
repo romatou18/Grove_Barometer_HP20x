@@ -9,6 +9,8 @@
 
 #ifndef _KALMANFILTER_H
 #define _KALMANFILTER_H
+
+namespace grove {
 /****************************************************************************/
 /***        Include files                                                 ***/
 /****************************************************************************/
@@ -34,4 +36,5 @@ class KalmanFilter
 	
 };
 extern KalmanFilter kalmanFilter;
+};
 #endif

@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+namespace grove {
+
 /* random number table */
 float Rand_Table[100]={
 0.5377,1.8339,-2.2588,0.8622,0.3188,-1.3077,-0.4336,0.342,3.5784, 
@@ -91,4 +93,5 @@ float KalmanFilter::Filter(float origin)
 	X_post = X_pre + K_cur*(origin - X_pre);
 	
 	return X_post;
+}
 }
