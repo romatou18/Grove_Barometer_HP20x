@@ -17,6 +17,7 @@
 /****************************************************************************/
 /***       Local Variable                                                 ***/
 /****************************************************************************/
+//  extern HP20x_dev HP20x(0, 21, 22);
 
 
 /****************************************************************************/
@@ -29,8 +30,14 @@
  **@ OutPut: none
  **@ Retval: none
 */
-HP20x_dev::HP20x_dev(uint8_t busID) : TwoWire(busID)
+HP20x_dev::HP20x_dev(uint8_t bus_controller, int sda, int sdc, uint32_t freq)
+//:TwoWire(bus_controller)
 {
+	i2c_sda = sda;
+	i2c_sdc = sdc;
+	i2c_bus = bus_controller;
+	i2c_freq = freq;
+	wire = nullptr;
     OSR_CFG = HP20X_CONVERT_OSR1024;
     OSR_ConvertTime = 25; 
 }
@@ -42,15 +49,34 @@ HP20x_dev::HP20x_dev(uint8_t busID) : TwoWire(busID)
  **@ OutPut: none
  **@ Retval: none
 */
-void HP20x_dev::begin(int sda, int scl)
+bool HP20x_dev::begin()
 {
-  Wire.begin(sda, scl);
+	bool result = false;
+	if(i2c_bus == 0){
+ 		result = Wire.begin(i2c_sda, i2c_sdc, i2c_freq);
+		wire = &Wire;
+	} else {
+		result = Wire1.begin(i2c_sda, i2c_sdc, i2c_freq);
+		wire = &Wire1;
+	}
+ 
   /* Reset HP20x_dev */
   HP20x.HP20X_IIC_WriteCmd(HP20X_SOFT_RST);
-  HP20x.HP20X_EnableCompensate();
-
+  return result;
 }
 
+/*
+ **@ Function name: isAvailable
+ **@ Description: Indicate whether it's available
+ **@ Input: none
+ **@ OutPut: none
+ **@ Retval: uchar 
+*/
+uchar HP20x_dev::isAvailable()
+{
+  uchar ret = HP20x.HP20X_IIC_ReadReg(REG_PARA);
+  return ret;
+}
 /*
  **@ Function name: ReadTemperature
  **@ Description: Read Temperature from HP20x_dev
@@ -59,12 +85,16 @@ void HP20x_dev::begin(int sda, int scl)
  **@ Retval:
 */
 ulong HP20x_dev::ReadTemperature(void)
-{   
+{
+    uchar Temp;
+    uchar Temp0;
+     
 	HP20X_IIC_WriteCmd(HP20X_WR_CONVERT_CMD|OSR_CFG);	//ADC convert
-	delay(OSR_ConvertTime);			                    //difference OSR_CFG will be difference OSR_ConvertTime
-	HP20X_IIC_WriteCmd(HP20X_READ_T);      
-	ulong Temperature = HP20X_IIC_ReadData();
-	return Temperature;		
+ 
+    delay(OSR_ConvertTime);			                    //difference OSR_CFG will be difference OSR_ConvertTime
+    HP20X_IIC_WriteCmd(HP20X_READ_T);      
+    ulong Temperature = HP20X_IIC_ReadData();
+    return Temperature;		
 }
 
 /*
@@ -138,9 +168,9 @@ void IIC_ReadAltitudeAndTemperature(void)
 void HP20x_dev::HP20X_IIC_WriteCmd(uchar uCmd)
 {		
 	/* Port to arduino */
-	Wire.beginTransmission(HP20X_I2C_DEV_ID);
-	Wire.write(uCmd);
-	Wire.endTransmission();
+	wire->beginTransmission(HP20X_I2C_DEV_ID);
+	wire->write(uCmd);
+	wire->endTransmission();
 }
 
 /*
@@ -158,12 +188,11 @@ uchar HP20x_dev::HP20X_IIC_ReadReg(uchar bReg)
 	/* Send a register reading command */
     HP20X_IIC_WriteCmd(bReg|HP20X_RD_REG_MODE);	
 	 
-	Wire.requestFrom(HP20X_I2C_DEV_ID, 1);	 
-	// while(Wire.available())
-	// {
-	//     Temp = Wire.read();
-	// }
-	Temp = Wire.read();
+	wire->requestFrom(HP20X_I2C_DEV_ID, 1);	 
+	while(wire->available())
+	{
+	    Temp = wire->read();
+	}
 	 
 	return Temp;
 } 
@@ -176,10 +205,10 @@ uchar HP20x_dev::HP20X_IIC_ReadReg(uchar bReg)
 */
 void HP20x_dev::HP20X_IIC_WriteReg(uchar bReg,uchar bData)
 {       
-	Wire.beginTransmission(HP20X_I2C_DEV_ID);
-	Wire.write(bReg|HP20X_WR_REG_MODE);
-	Wire.write(bData);
-	Wire.endTransmission();
+	wire->beginTransmission(HP20X_I2C_DEV_ID);
+	wire->write(bReg|HP20X_WR_REG_MODE);
+	wire->write(bData);
+	wire->endTransmission();
 }
 
 
@@ -211,11 +240,11 @@ ulong HP20x_dev::HP20X_IIC_ReadData3byte(void)
 	int cnt = 0;
 	
 	/* Require three bytes from slave */
-	Wire.requestFrom(HP20X_I2C_DEV_ID, 3);      
+	wire->requestFrom(HP20X_I2C_DEV_ID, 3);      
 
-    while(Wire.available())     // slave may send less than requested
+    while(wire->available())     // slave may send less than requested
     { 
-      uchar c = Wire.read();    // receive a byte as character	  	  
+      uchar c = wire->read();    // receive a byte as character	  	  
 	  tmpArray[cnt] = (ulong)c;
 	  cnt++;
 	}
@@ -244,20 +273,5 @@ ulong HP20x_dev::HP20X_IIC_ReadData3byte(void)
 	return TempData;
 } 
 
-/**
- * @brief Enable Compensation by set CMPS_EN bit on 0x0F PARA register 
-*/
-void HP20x_dev::HP20X_EnableCompensate(void)
-{
-	HP20X_IIC_WriteReg(REG_PARA, OK_HP20X_DEV);
-}
-
-/**
- * @brief Disable Compensation by clear CMPS_EN bit on 0x0F PARA register 
-*/
-void HP20x_dev::HP20X_DisableCompensate(void)
-{
-	HP20X_IIC_WriteReg(REG_PARA, 0);
-}
 
 /**************************************END OF FILE**************************************/

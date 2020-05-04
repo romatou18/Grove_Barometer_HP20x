@@ -114,5 +114,7 @@ public:
 	void HP20X_EnableCompensate(void);
 	void HP20X_DisableCompensate(void);
 };
-extern HP20x_dev HP20x; // Define it in application using constructor parameter i.e. ... =  HP20x(sda,scl);
-#endif
+
+/// @brief Define it in application using constructor parameter i.e. ... =  HP20x(sda_pin,scl_pin, frequency);
+extern HP20x_dev HP20x;
+
